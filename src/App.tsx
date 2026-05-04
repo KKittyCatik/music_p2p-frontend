@@ -41,7 +41,7 @@ function DevPanel() {
         onClick={() => setOpen((o) => !o)}
       >
         <span className="font-mono uppercase tracking-wider">Dev Tools</span>
-        {open ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+        {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
 
       {open && (

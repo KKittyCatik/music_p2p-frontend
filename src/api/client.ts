@@ -111,7 +111,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<ApiResponse
     return { success: false, error: `HTTP ${res.status}: ${text}` };
   }
 
-  // 204 No Content or empty body — return null cast to T
+  // 204 No Content or non-JSON body — return null cast to T.
+  // Callers of no-content endpoints (DELETE, POST /stop, etc.) should use
+  // ApiResponse<null> so this cast is safe for the intended usage.
   const contentType = res.headers.get('content-type') ?? '';
   if (res.status === 204 || !contentType.includes('application/json')) {
     return { success: true, data: null as unknown as T };
