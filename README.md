@@ -1,15 +1,84 @@
-# React + TypeScript + Vite
+# Ripple — music_p2p-frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A dark-glass React/Vite frontend for the **music_p2p** P2P audio streaming node.
 
-Currently, two official plugins are available:
+## Quick start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+# Install dependencies
+npm install
 
-## React Compiler
+# Start the dev server (pointing at a local backend)
+VITE_API_URL=http://localhost:8080 npm run dev
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+# Production build
+npm run build
+```
+
+## Configuration
+
+| Variable | Description | Default |
+|---|---|---|
+| `VITE_API_URL` | Base URL of the backend node (no trailing slash) | `""` (same origin) |
+
+The API client automatically appends `/api/v1` to `VITE_API_URL`, so set the variable to just the host:port:
+
+```
+VITE_API_URL=http://192.168.1.10:8080
+```
+
+### Docker
+
+```bash
+docker build --build-arg VITE_API_URL=http://<YOUR_SERVER>:8080 -t ripple-frontend .
+docker run -p 80:80 ripple-frontend
+```
+
+---
+
+## API coverage
+
+All Swagger 2.0 endpoints under `basePath: /api/v1` are implemented in `src/api/client.ts`.
+
+| Group | Method | Path | Function |
+|---|---|---|---|
+| **Node** | GET | `/status` | `getStatus()` |
+| **Tracks** | GET | `/tracks` | `getTracks()` |
+| | POST | `/tracks/share` | `shareTrack(file, announce?)` |
+| | DELETE | `/tracks/{cid}` | `deleteTrack(cid)` |
+| **Metadata** | GET | `/metadata` | `getMetadata()` |
+| | POST | `/metadata` | `publishMetadata(payload)` |
+| | GET | `/metadata/search?q=` | `searchMetadata(q)` |
+| | GET | `/metadata/{cid}` | `getMetadataByCid(cid)` |
+| **Peers** | GET | `/peers` | `getPeers()` |
+| | POST | `/peers/connect` | `connectPeer(multiaddr)` |
+| | GET | `/peers/{peerID}/score` | `getPeerScore(peerID)` |
+| **Playback** | POST | `/playback/play` | `playTrack(cid)` |
+| | POST | `/playback/seek` | `seek(chunkIndex)` |
+| | GET | `/playback/status` | `getPlaybackStatus()` |
+| | POST | `/playback/stop` | `stopPlayback()` |
+| **Queue** | GET | `/queue` | `getQueue()` |
+| | POST | `/queue` | `enqueue(item)` |
+| | DELETE | `/queue` | `clearQueue()` |
+| | POST | `/queue/insert` | `insertQueueItem(item)` |
+| | GET | `/queue/history` | `getQueueHistory()` |
+| **DHT** | POST | `/dht/provide/{cid}` | `dhtProvide(cid)` |
+| | GET | `/dht/providers/{cid}` | `dhtProviders(cid)` |
+| **Engine** | GET | `/engine/status` | `getEngineStatus()` |
+
+All functions return `Promise<ApiResponse<T>>` where `ApiResponse<T>` is a discriminated union:
+
+```ts
+type ApiResponse<T> =
+  | { success: true;  data: T }
+  | { success: false; error: string };
+```
+
+### Developer utilities panel
+
+A collapsible **Dev Tools** section at the bottom of the sidebar lets you fire representative API calls and inspect the raw JSON response — useful during local development without a separate API client.
+
+---
 
 ## Expanding the ESLint configuration
 
@@ -21,53 +90,16 @@ export default defineConfig([
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
       tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
       tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
     ],
     languageOptions: {
       parserOptions: {
         project: ['./tsconfig.node.json', './tsconfig.app.json'],
         tsconfigRootDir: import.meta.dirname,
       },
-      // other options...
     },
   },
 ])
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```

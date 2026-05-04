@@ -1,6 +1,83 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Upload, Music, Radio, Settings } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Upload, Music, Radio, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import * as api from './api/client';
+
+// ---------------------------------------------------------------------------
+// Developer utilities panel — calls representative new endpoints and shows JSON
+// ---------------------------------------------------------------------------
+
+type DevPanelEntry = { label: string; result: unknown };
+
+function DevPanel() {
+  const [open, setOpen] = useState(false);
+  const [entries, setEntries] = useState<DevPanelEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const run = async (label: string, fn: () => Promise<unknown>) => {
+    setLoading(true);
+    try {
+      const result = await fn();
+      setEntries((prev) => [{ label, result }, ...prev].slice(0, 20));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const buttons: { label: string; fn: () => Promise<unknown> }[] = [
+    { label: 'GET /status',          fn: () => api.getStatus() },
+    { label: 'GET /playback/status', fn: () => api.getPlaybackStatus() },
+    { label: 'GET /queue',           fn: () => api.getQueue() },
+    { label: 'GET /queue/history',   fn: () => api.getQueueHistory() },
+    { label: 'GET /peers',           fn: () => api.getPeers() },
+    { label: 'GET /engine/status',   fn: () => api.getEngineStatus() },
+    { label: 'GET /metadata',        fn: () => api.getMetadata() },
+    { label: 'POST /playback/stop',  fn: () => api.stopPlayback() },
+  ];
+
+  return (
+    <div className="border-t border-white/10 mt-auto">
+      <button
+        className="w-full flex items-center justify-between px-4 py-3 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="font-mono uppercase tracking-wider">Dev Tools</span>
+        {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </button>
+
+      {open && (
+        <div className="px-3 pb-4 space-y-1">
+          {buttons.map(({ label, fn }) => (
+            <button
+              key={label}
+              disabled={loading}
+              onClick={() => void run(label, fn)}
+              className="w-full text-left px-2 py-1.5 rounded-lg text-xs font-mono text-gray-300 hover:text-white hover:bg-white/10 disabled:opacity-50 transition"
+            >
+              {label}
+            </button>
+          ))}
+
+          {entries.length > 0 && (
+            <div className="mt-2 space-y-2 max-h-56 overflow-y-auto pr-1">
+              {entries.map((e, i) => (
+                <div key={i} className="bg-black/40 rounded-lg p-2">
+                  <p className="text-[10px] font-mono text-purple-400 mb-1">{e.label}</p>
+                  <pre className="text-[10px] text-gray-300 whitespace-pre-wrap break-all">
+                    {JSON.stringify(e.result, null, 2)}
+                  </pre>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main App
+// ---------------------------------------------------------------------------
 
 export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -133,6 +210,9 @@ export default function App() {
             <Radio size={18} /> <span>Сеть</span>
           </div>
         </nav>
+
+        {/* Developer utilities panel */}
+        <DevPanel />
       </aside>
 
       {/* Main Content */}
@@ -151,7 +231,7 @@ export default function App() {
               <div
                 key={track.CID}
                 className="group cursor-pointer"
-                onClick={() => handleTrackClick(track)}
+                onClick={() => void handleTrackClick(track)}
               >
                 <div className="aspect-square bg-white/5 border border-white/10 rounded-2xl mb-4 relative overflow-hidden shadow-lg group-hover:border-white/20 transition-all duration-300 backdrop-blur-sm">
                   <div className="absolute inset-0 flex items-center justify-center">
