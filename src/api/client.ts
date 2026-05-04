@@ -1,14 +1,12 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
 // ---------------------------------------------------------------------------
-// Response envelope
+// Response envelope (discriminated union for type-safe access)
 // ---------------------------------------------------------------------------
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error: string;
-}
+export type ApiResponse<T> =
+  | { success: true; data: T; error?: never }
+  | { success: false; data?: never; error: string };
 
 // ---------------------------------------------------------------------------
 // Domain models
@@ -41,7 +39,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<ApiResponse
   const res = await fetch(`${BASE_URL}${path}`, init);
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
-    return { success: false, data: undefined as unknown as T, error: text };
+    return { success: false, error: text };
   }
   const json = (await res.json()) as ApiResponse<T>;
   return json;
