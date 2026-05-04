@@ -1,8 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Upload, Music, Radio, Settings } from 'lucide-react';
+import * as api from './api/client';
 
 export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [tracks, setTracks] = useState<api.TrackMetadata[]>([]);
+  const [peerCount, setPeerCount] = useState<number | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<api.TrackMetadata | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Increment to trigger a re-fetch after upload
+  const [fetchSeed, setFetchSeed] = useState(0);
+
+  useEffect(() => {
+    api.getMetadata()
+      .then((metaRes) => {
+        if (metaRes.success && metaRes.data.length > 0) {
+          setTracks(metaRes.data);
+        } else {
+          api.getTracks()
+            .then((tracksRes) => {
+              if (tracksRes.success) {
+                setTracks(tracksRes.data.map((t) => ({ CID: t.CID })));
+              }
+            })
+            .catch((err) => console.error('Failed to fetch tracks:', err));
+        }
+      })
+      .catch((err) => console.error('Failed to fetch metadata:', err));
+
+    api.getStatus()
+      .then((res) => {
+        if (res.success) setPeerCount(res.data.PeerCount);
+      })
+      .catch((err) => console.error('Failed to fetch status:', err));
+  }, [fetchSeed]);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    try {
+      await api.shareTrack(file, true);
+      setFetchSeed((s) => s + 1);
+    } catch (err) {
+      console.error('Upload failed:', err);
+      setUploadError('Не удалось загрузить файл. Попробуйте ещё раз.');
+    } finally {
+      // reset so the same file can be re-selected if needed
+      e.target.value = '';
+    }
+  };
+
+  const handleTrackClick = async (track: api.TrackMetadata) => {
+    setCurrentTrack(track);
+    setIsPlaying(true);
+    try {
+      await api.playTrack(track.CID);
+    } catch (err) {
+      console.error('Playback failed:', err);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-[#09090B] text-gray-100 font-sans relative overflow-hidden">
@@ -10,6 +72,15 @@ export default function App() {
       {/* Ambient background glows */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#7C3AED]/20 blur-[120px] rounded-full pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-5%] w-[30%] h-[40%] bg-[#EC4899]/20 blur-[100px] rounded-full pointer-events-none"></div>
+
+      {/* Hidden file input for upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/mpeg,.mp3"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
       {/* Sidebar (Dark Glassmorphism) */}
       <aside className="w-64 bg-white/5 backdrop-blur-3xl border-r border-white/10 flex flex-col pt-8 z-10">
@@ -38,13 +109,26 @@ export default function App() {
           </svg>
           Ripple
         </div>
+
+        {peerCount !== null && (
+          <div className="px-6 mb-4 text-xs text-gray-400">
+            Peers: {peerCount}
+          </div>
+        )}
+
         <nav className="flex-1 px-4 space-y-1">
           <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/10 text-white font-medium cursor-pointer transition shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
             <Music size={18} /> <span>Медиатека</span>
           </div>
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer transition">
+          <div
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer transition"
+            onClick={handleUploadClick}
+          >
             <Upload size={18} /> <span>Загрузить</span>
           </div>
+          {uploadError && (
+            <p className="px-3 py-1 text-xs text-red-400">{uploadError}</p>
+          )}
           <div className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer transition">
             <Radio size={18} /> <span>Сеть</span>
           </div>
@@ -60,19 +144,28 @@ export default function App() {
         </header>
 
         <div className="p-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 overflow-y-auto pb-32">
-          {/* Example Track Card */}
-          <div className="group cursor-pointer">
-            <div className="aspect-square bg-white/5 border border-white/10 rounded-2xl mb-4 relative overflow-hidden shadow-lg group-hover:border-white/20 transition-all duration-300 backdrop-blur-sm">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Music size={40} className="text-gray-600 group-hover:text-gray-400 transition-colors" />
+          {tracks.length === 0 ? (
+            <p className="text-gray-500 col-span-full text-sm">Треков нет. Загрузите первый!</p>
+          ) : (
+            tracks.map((track) => (
+              <div
+                key={track.CID}
+                className="group cursor-pointer"
+                onClick={() => handleTrackClick(track)}
+              >
+                <div className="aspect-square bg-white/5 border border-white/10 rounded-2xl mb-4 relative overflow-hidden shadow-lg group-hover:border-white/20 transition-all duration-300 backdrop-blur-sm">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Music size={40} className="text-gray-600 group-hover:text-gray-400 transition-colors" />
+                  </div>
+                  <div className="absolute bottom-3 right-3 w-10 h-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-white text-white hover:text-black">
+                    <Play size={18} className="ml-1" fill="currentColor" />
+                  </div>
+                </div>
+                <h3 className="font-semibold text-sm truncate">{track.Title ?? 'Unknown Title'}</h3>
+                <p className="text-xs text-gray-400 truncate mt-1">{track.Artist ?? 'Unknown Artist'}</p>
               </div>
-              <div className="absolute bottom-3 right-3 w-10 h-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-white text-white hover:text-black">
-                <Play size={18} className="ml-1" fill="currentColor" />
-              </div>
-            </div>
-            <h3 className="font-semibold text-sm truncate">Nightcall</h3>
-            <p className="text-xs text-gray-400 truncate mt-1">Kavinsky</p>
-          </div>
+            ))
+          )}
         </div>
       </main>
 
@@ -80,8 +173,12 @@ export default function App() {
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl h-20 bg-[#1A1A1D]/80 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] rounded-2xl flex items-center px-6 z-20">
         <div className="w-12 h-12 bg-gradient-to-tr from-[#7C3AED] via-[#4F46E5] to-[#EC4899] rounded-lg shadow-inner flex-shrink-0"></div>
         <div className="flex-1 overflow-hidden ml-4">
-          <h4 className="font-semibold text-sm truncate text-white">Nightcall</h4>
-          <p className="text-xs text-gray-400 truncate">Kavinsky</p>
+          <h4 className="font-semibold text-sm truncate text-white">
+            {currentTrack?.Title ?? currentTrack?.CID ?? '—'}
+          </h4>
+          <p className="text-xs text-gray-400 truncate">
+            {currentTrack?.Artist ?? (currentTrack ? currentTrack.CID : '—')}
+          </p>
         </div>
         
         {/* Controls */}
