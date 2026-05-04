@@ -98,7 +98,7 @@ export default function App() {
           api.getTracks()
             .then((tracksRes) => {
               if (tracksRes.success) {
-                setTracks(tracksRes.data.map((t) => ({ CID: t.CID })));
+                setTracks(tracksRes.data.map((t) => ({ cid: t.cid })));
               }
             })
             .catch((err) => console.error('Failed to fetch tracks:', err));
@@ -108,7 +108,7 @@ export default function App() {
 
     api.getStatus()
       .then((res) => {
-        if (res.success) setPeerCount(res.data.PeerCount);
+        if (res.success) setPeerCount(res.data.peer_count);
       })
       .catch((err) => console.error('Failed to fetch status:', err));
   }, [fetchSeed]);
@@ -137,7 +137,7 @@ export default function App() {
     setCurrentTrack(track);
     setIsPlaying(true);
     try {
-      await api.playTrack(track.CID);
+      await api.playTrack(track.cid);
     } catch (err) {
       console.error('Playback failed:', err);
     }
@@ -229,7 +229,7 @@ export default function App() {
           ) : (
             tracks.map((track) => (
               <div
-                key={track.CID}
+                key={track.cid}
                 className="group cursor-pointer"
                 onClick={() => void handleTrackClick(track)}
               >
@@ -241,8 +241,8 @@ export default function App() {
                     <Play size={18} className="ml-1" fill="currentColor" />
                   </div>
                 </div>
-                <h3 className="font-semibold text-sm truncate">{track.Title ?? 'Unknown Title'}</h3>
-                <p className="text-xs text-gray-400 truncate mt-1">{track.Artist ?? 'Unknown Artist'}</p>
+                <h3 className="font-semibold text-sm truncate">{track.title ?? 'Unknown Title'}</h3>
+                <p className="text-xs text-gray-400 truncate mt-1">{track.artist ?? 'Unknown Artist'}</p>
               </div>
             ))
           )}
@@ -254,10 +254,10 @@ export default function App() {
         <div className="w-12 h-12 bg-gradient-to-tr from-[#7C3AED] via-[#4F46E5] to-[#EC4899] rounded-lg shadow-inner flex-shrink-0"></div>
         <div className="flex-1 overflow-hidden ml-4">
           <h4 className="font-semibold text-sm truncate text-white">
-            {currentTrack?.Title ?? currentTrack?.CID ?? '—'}
+            {currentTrack?.title ?? currentTrack?.cid ?? '—'}
           </h4>
           <p className="text-xs text-gray-400 truncate">
-            {currentTrack?.Artist ?? (currentTrack ? currentTrack.CID : '—')}
+            {currentTrack?.artist ?? (currentTrack ? currentTrack.cid : '—')}
           </p>
         </div>
         

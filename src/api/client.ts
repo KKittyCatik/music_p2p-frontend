@@ -16,43 +16,43 @@ export type ApiResponse<T> =
 // ---------------------------------------------------------------------------
 
 export interface StatusResponse {
-  PeerID: string;
-  Addrs: string[];
-  PeerCount: number;
-  UptimeSecs: number;
+  peer_id: string;
+  addrs: string[];
+  peer_count: number;
+  uptime_secs: number;
 }
 
 export interface TrackInfo {
-  CID: string;
-  ChunkCount: number;
+  cid: string;
+  chunk_count: number;
 }
 
 export interface Variant {
-  CID: string;
-  Bitrate?: number;
-  Format?: string;
+  cid: string;
+  bitrate?: number;
+  format?: string;
 }
 
 export interface TrackMetadata {
-  CID: string;
-  Title?: string;
-  Artist?: string;
-  /** Duration in seconds (time.Duration serialised as nanoseconds → treated as number). */
-  Duration?: number;
-  Variants?: Variant[];
+  cid: string;
+  title?: string;
+  artist?: string;
+  /** Duration in seconds. */
+  duration?: number;
+  variants?: Variant[];
 }
 
 /** Request body for POST /metadata */
 export interface MetadataRequest {
-  CID: string;
-  Title?: string;
-  Artist?: string;
-  Duration?: number;
+  cid: string;
+  title?: string;
+  artist?: string;
+  duration?: number;
 }
 
 export interface PeerInfo {
-  ID: string;
-  Addrs: string[];
+  id: string;
+  addrs: string[];
 }
 
 /** Request body for POST /peers/connect */
@@ -61,9 +61,9 @@ export interface ConnectRequest {
 }
 
 export interface PlaybackStatus {
-  CID?: string;
-  ChunkIndex: number;
-  Playing: boolean;
+  cid?: string;
+  chunk_index: number;
+  playing: boolean;
 }
 
 /** Request body for POST /playback/play */
@@ -73,25 +73,25 @@ export interface PlayRequest {
 
 /** Request body for POST /playback/seek */
 export interface SeekRequest {
-  chunkIndex: number;
+  chunk_index: number;
 }
 
 export interface QueueItemRequest {
-  CID: string;
+  cid: string;
 }
 
 export interface QueueItemResponse {
-  CID: string;
-  Position: number;
+  cid: string;
+  position: number;
 }
 
 export interface QueueState {
-  Items: QueueItemResponse[];
+  items: QueueItemResponse[];
 }
 
 export interface EngineStatus {
-  Running: boolean;
-  Mode?: string;
+  running: boolean;
+  mode?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -227,7 +227,7 @@ export function playTrack(cid: string): Promise<ApiResponse<null>> {
 
 /** POST /playback/seek — seek to a specific chunk index */
 export function seek(chunkIndex: number): Promise<ApiResponse<null>> {
-  return jsonRequest<null>('/playback/seek', 'POST', { chunkIndex } satisfies SeekRequest);
+  return jsonRequest<null>('/playback/seek', 'POST', { chunk_index: chunkIndex } satisfies SeekRequest);
 }
 
 /** GET /playback/status — current playback state */
