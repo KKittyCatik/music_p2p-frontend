@@ -8,16 +8,35 @@ export default function App() {
     <div className="flex h-screen bg-[#09090B] text-gray-100 font-sans relative overflow-hidden">
       
       {/* Ambient background glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-[30%] h-[40%] bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#7C3AED]/20 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-5%] w-[30%] h-[40%] bg-[#EC4899]/20 blur-[100px] rounded-full pointer-events-none"></div>
 
       {/* Sidebar (Dark Glassmorphism) */}
       <aside className="w-64 bg-white/5 backdrop-blur-3xl border-r border-white/10 flex flex-col pt-8 z-10">
         <div className="px-6 mb-8 font-bold text-2xl tracking-tight flex items-center gap-3 text-white">
-          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-            <Radio size={16} className="text-white" />
-          </div>
-          P2P.Node
+          <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+            <defs>
+              <linearGradient id="rippleLogoGradient" x1="0" y1="0" x2="14" y2="14">
+                <stop offset="0%" stopColor="#7C3AED"></stop>
+                <stop offset="50%" stopColor="#4F46E5"></stop>
+                <stop offset="100%" stopColor="#EC4899"></stop>
+              </linearGradient>
+              <filter id="rippleLogoGlow">
+                <feGaussianBlur stdDeviation="0.8" result="blur"></feGaussianBlur>
+                <feMerge>
+                  <feMergeNode in="blur"></feMergeNode>
+                  <feMergeNode in="SourceGraphic"></feMergeNode>
+                </feMerge>
+              </filter>
+            </defs>
+            <line x1="7" y1="4" x2="2" y2="10" stroke="url(#rippleLogoGradient)" strokeWidth="0.8" opacity="0.6"></line>
+            <line x1="7" y1="4" x2="12" y2="10" stroke="url(#rippleLogoGradient)" strokeWidth="0.8" opacity="0.6"></line>
+            <line x1="2" y1="10" x2="12" y2="10" stroke="url(#rippleLogoGradient)" strokeWidth="0.8" opacity="0.6"></line>
+            <circle cx="7" cy="4" r="2" fill="url(#rippleLogoGradient)" filter="url(#rippleLogoGlow)"></circle>
+            <circle cx="2" cy="10" r="1.5" fill="url(#rippleLogoGradient)" opacity="0.9" filter="url(#rippleLogoGlow)"></circle>
+            <circle cx="12" cy="10" r="1.5" fill="url(#rippleLogoGradient)" opacity="0.9" filter="url(#rippleLogoGlow)"></circle>
+          </svg>
+          Ripple
         </div>
         <nav className="flex-1 px-4 space-y-1">
           <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/10 text-white font-medium cursor-pointer transition shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
@@ -59,7 +78,7 @@ export default function App() {
 
       {/* Floating Bottom Player */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl h-20 bg-[#1A1A1D]/80 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] rounded-2xl flex items-center px-6 z-20">
-        <div className="w-12 h-12 bg-gradient-to-tr from-purple-500 to-indigo-500 rounded-lg shadow-inner flex-shrink-0"></div>
+        <div className="w-12 h-12 bg-gradient-to-tr from-[#7C3AED] via-[#4F46E5] to-[#EC4899] rounded-lg shadow-inner flex-shrink-0"></div>
         <div className="flex-1 overflow-hidden ml-4">
           <h4 className="font-semibold text-sm truncate text-white">Nightcall</h4>
           <p className="text-xs text-gray-400 truncate">Kavinsky</p>
@@ -79,7 +98,7 @@ export default function App() {
           </div>
           {/* Progress Bar */}
           <div className="w-full h-1 bg-white/10 rounded-full mt-2.5 relative group cursor-pointer">
-            <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full w-1/3 group-hover:shadow-[0_0_10px_rgba(168,85,247,0.5)] transition-all"></div>
+            <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-[#7C3AED] via-[#4F46E5] to-[#EC4899] rounded-full w-1/3 group-hover:shadow-[0_0_10px_rgba(168,85,247,0.5)] transition-all"></div>
           </div>
         </div>
 
